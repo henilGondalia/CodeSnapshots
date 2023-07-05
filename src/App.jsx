@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from "react";
+import { useState, useRef } from "react";
 import Header from "./components/Header/Header";
 import { COLORS, LANGUAGES } from "./constant";
 import Background from "./components/Background";
@@ -15,13 +15,13 @@ function App() {
   const [backgroundColor, setBackgroundColor] = useState(2);
   const [exporting, setExporting] = useState(false);
   const [exportingGIF, setExportingGIF] = useState(false);
-  const [currentFrameToCapture, setCurrentFrameToCapture] = useState(0);
+  //   const [currentFrameToCapture, setCurrentFrameToCapture] = useState(0);
   const [filename, setFilename] = useState("App.js");
-  const [frames, setFrames] = useState([]);
-  const [gifFrames, setGIFFrames] = useState([]);
+  //   const [frames, setFrames] = useState([]);
+  //   const [gifFrames, setGIFFrames] = useState([]);
   const [editorCode, setEditorCode] = useState("// Type your code here");
   const [allGIFFramesCaptured, setAllGIFFramesCaptured] = useState(false);
-  const [singleFrameProcessing, setSingleFrameProcessing] = useState(false);
+  //   const [singleFrameProcessing, setSingleFrameProcessing] = useState(false);
 
   const takeSnapshot = async () => {
     const node = backgroundRef.current;
@@ -86,8 +86,9 @@ function App() {
       }
       tempFrames.push(currentFrame);
     }
-    setFrames(tempFrames);
+    // setFrames(tempFrames);
     setExportingGIF(true);
+    setAllGIFFramesCaptured(tempFrames);
   };
 
   return (
