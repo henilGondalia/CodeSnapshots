@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useRef, useState, useEffect } from "react";
 import ArrowDownIcon from "../../assets/svg/arrowDown.svg";
 
 const BackgroundColorInput = ({ value, onChange }) => {
@@ -13,6 +13,18 @@ const BackgroundColorInput = ({ value, onChange }) => {
     onChange(value);
     setShowOptions(false);
   };
+
+  const handleClickOutside = (event) => {
+    if (elementRef.current && !elementRef.current.contains(event.target)) {
+      setShowOptions(false);
+    }
+  };
+  useEffect(() => {
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => {
+      document.removeEventListener("mousedown", handleClickOutside);
+    };
+  }, [elementRef, setShowOptions]);
 
   return (
     <div className="select-input" ref={elementRef}>

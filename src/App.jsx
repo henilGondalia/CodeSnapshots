@@ -1,8 +1,9 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import Header from "./components/Header/Header";
 import { COLORS, LANGUAGES } from "./constant";
 import Background from "./components/Background";
 import domtoimage from "dom-to-image-more";
+import { createGIF } from "gifshot";
 
 const SCALE = 1.9;
 
@@ -15,13 +16,77 @@ function App() {
   const [backgroundColor, setBackgroundColor] = useState(2);
   const [exporting, setExporting] = useState(false);
   const [exportingGIF, setExportingGIF] = useState(false);
-  //   const [currentFrameToCapture, setCurrentFrameToCapture] = useState(0);
+  const [currentFrameToCapture, setCurrentFrameToCapture] = useState(0);
   const [filename, setFilename] = useState("App.js");
-  //   const [frames, setFrames] = useState([]);
-  //   const [gifFrames, setGIFFrames] = useState([]);
+  const [frames, setFrames] = useState([]);
+  const [gifFrames, setGIFFrames] = useState([]);
   const [editorCode, setEditorCode] = useState("// Type your code here");
   const [allGIFFramesCaptured, setAllGIFFramesCaptured] = useState(false);
-  //   const [singleFrameProcessing, setSingleFrameProcessing] = useState(false);
+  const [singleFrameProcessing, setSingleFrameProcessing] = useState(false);
+
+  useEffect(() => {
+    if (exportingGIF && !singleFrameProcessing) {
+      if (currentFrameToCapture === frames.length - 1) {
+        setExportingGIF(false);
+        setAllGIFFramesCaptured(true);
+        setCurrentFrameToCapture(0);
+      } else {
+        setCurrentFrameToCapture((prev) => prev + 1);
+      }
+    }
+  }, [
+    exportingGIF,
+    singleFrameProcessing,
+    currentFrameToCapture,
+    frames.length,
+  ]);
+
+  useEffect(() => {
+    // set Frames inside code editor
+    if (exportingGIF) {
+      setEditorCode(frames[currentFrameToCapture]);
+    }
+  }, [exportingGIF, currentFrameToCapture, frames]);
+
+  useEffect(() => {
+    if (exportingGIF && !singleFrameProcessing) {
+      setSingleFrameProcessing(true);
+
+      takeSnapshot().then((imageBlob) => {
+        setGIFFrames((prev) => [...prev, imageBlob]);
+        setSingleFrameProcessing(false);
+      });
+    }
+  }, [exportingGIF, editorCode, frames, singleFrameProcessing]);
+
+  useEffect(() => {
+    if (allGIFFramesCaptured && gifFrames.length === frames.length) {
+      const width = backgroundRef.current.offsetWidth * SCALE;
+      const height = backgroundRef.current.offsetHeight * SCALE;
+      const framesToExport = [...gifFrames];
+      for (let i = 0; i < 9; i++) {
+        framesToExport.push(gifFrames[gifFrames.length - 1]);
+      }
+      createGIF(
+        {
+          images: framesToExport,
+          gifWidth: width,
+          gifHeight: height,
+          numWorkers: 5,
+          frameDuration,
+          sampleInterval: 7,
+        },
+        (obj) => {
+          if (!obj.error) {
+            downloadBlob(obj.image, `${filename}.gif`);
+          }
+          setAllGIFFramesCaptured(false);
+          setGIFFrames([]);
+          setFrames([]);
+        }
+      );
+    }
+  }, [allGIFFramesCaptured, gifFrames, frames, filename, frameDuration]);
 
   const takeSnapshot = async () => {
     const node = backgroundRef.current;
@@ -70,10 +135,7 @@ function App() {
   };
 
   const onRecord = () => {
-    debugger;
-    const totalLines = editorCode
-      .split("")
-      .filter((letter) => letter === "\n").length;
+    const totalLines = editorCode.split("\n").length;
     let linesLeft = totalLines;
     let tempFrames = [];
     for (let i = 0; i < editorCode.length; i++) {
@@ -81,14 +143,11 @@ function App() {
         linesLeft--;
       }
       let currentFrame = editorCode.slice(0, i + 1);
-      for (let j = 0; j < linesLeft; j++) {
-        currentFrame += "\n";
-      }
+      currentFrame += "\n".repeat(linesLeft);
       tempFrames.push(currentFrame);
     }
-    // setFrames(tempFrames);
+    setFrames(tempFrames);
     setExportingGIF(true);
-    setAllGIFFramesCaptured(tempFrames);
   };
 
   return (
